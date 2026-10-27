@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Daftar User</title>
+</head>
+<body>
+    <h1>Daftar User</h1>
+
+    <form method="get" action="/search-user/">
+        <input
+            type="text"
+            name="username"
+            placeholder="Cari username"
+        >
+        <button type="submit">Cari</button>
+    </form>
+
+    <ul>
+        {% for user in users %}
+            <li>
+                <a href="/users/{{ user.id }}/">
+                    {{ user.username }}
+                </a>
+                - {{ user.email }}
+            </li>
+        {% empty %}
+            <li>Belum ada user.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

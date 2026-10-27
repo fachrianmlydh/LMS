@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Statistik • e-LMS</title>
+
+  <style>
+    :root{
+      --bg:#f6f8fb; --card:#ffffff; --muted:#6b7280;
+      --accent:#2563eb; --accent-2:#06b6d4; --glass: rgba(10,15,30,0.03);
+      --radius:12px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg,#eef2ff 0%, #f8fafc 100%);
+      color:#0f1724; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      padding:28px;
+    }
+
+    .wrap{max-width:1100px; margin:0 auto;}
+    header{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px}
+    header h1{margin:0; font-size:20px; color:var(--accent)}
+    header p{margin:0; color:var(--muted); font-size:14px}
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:16px;
+    }
+    @media (max-width:900px){
+      .grid{grid-template-columns: repeat(2, 1fr)}
+    }
+    @media (max-width:520px){
+      .grid{grid-template-columns: 1fr}
+    }
+
+    .card{
+      background:var(--card); border-radius:var(--radius); padding:18px; box-shadow: 0 6px 20px rgba(15,23,42,0.06);
+    }
+    .card .label{font-size:13px; color:var(--muted)}
+    .card .value{font-size:24px; font-weight:700; margin-top:6px; color:#0b1220}
+
+    .columns{display:grid; grid-template-columns: 1fr 420px; gap:16px; margin-top:20px}
+    @media (max-width:900px){ .columns{grid-template-columns: 1fr; } }
+
+    .panel{background:var(--card); border-radius:var(--radius); padding:18px; box-shadow: 0 6px 20px rgba(15,23,42,0.06);}
+
+    .list{display:flex; flex-direction:column; gap:8px; margin-top:10px}
+    .list-item{display:flex; justify-content:space-between; gap:12px; padding:10px; border-radius:10px; background:var(--glass); align-items:center}
+    .list-item .name{font-weight:600}
+    .tiny{font-size:12px; color:var(--muted)}
+
+    .section-title{display:flex; justify-content:space-between; align-items:center; gap:12px}
+    .section-title h3{margin:0; font-size:16px; color:var(--accent)}
+    .empty{color:var(--muted); padding:18px; text-align:center}
+
+    /* table-like list for cheapest/expensive mobile friendly */
+    .mini-table{width:100%; border-radius:10px; overflow:hidden}
+    .mini-row{display:flex; justify-content:space-between; padding:10px 12px; background:transparent; border-bottom:1px solid rgba(15,23,42,0.03)}
+    .mini-row:last-child{border-bottom:0}
+
+    footer{margin-top:22px; text-align:center; color:var(--muted); font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="wrap" role="main" aria-live="polite">
+    <header>
+      <div>
+        <h1>📊 Statistik e-LMS</h1>
+        <p>Data diambil dari <code>/course-stat/</code></p>
+      </div>
+      <div id="last-updated" class="tiny">—</div>
+    </header>
+
+    <section class="grid" aria-label="Ringkasan statistik">
+      <div class="card">
+        <div class="label">Total Mata Kuliah</div>
+        <div class="value" id="stat-courses">—</div>
+      </div>
+      <div class="card">
+        <div class="label">Harga Rata-rata</div>
+        <div class="value" id="stat-avg">—</div>
+      </div>
+      <div class="card">
+        <div class="label">Harga Terendah</div>
+        <div class="value" id="stat-min">—</div>
+      </div>
+      <div class="card">
+        <div class="label">Harga Tertinggi</div>
+        <div class="value" id="stat-max">—</div>
+      </div>
+    </section>
+
+    <div class="columns">
+      <div>
+        <div class="panel" aria-labelledby="popular-title">
+          <div class="section-title"><h3 id="popular-title">Kursus Terpopuler</h3><div class="tiny" id="popular-count">—</div></div>
+          <div id="popular-list" class="list"></div>
+        </div>
+
+        <div class="panel" style="margin-top:16px" aria-labelledby="unpopular-title">
+          <div class="section-title"><h3 id="unpopular-title">Kursus Tidak Populer</h3></div>
+          <div id="unpopular-list" class="list"></div>
+        </div>
+      </div>
+
+      <aside>
+        <div class="panel" aria-labelledby="chart-title">
+          <div class="section-title">
+            <h3 id="chart-title">Grafik: Peserta per Kursus</h3>
+            <div class="tiny">Top 10</div>
+          </div>
+          <canvas id="popularChart" width="400" height="240" style="max-width:100%; margin-top:14px"></canvas>
+        </div>
+
+        <div class="panel" style="margin-top:16px">
+          <div class="section-title"><h3>Termurah & Termahal</h3></div>
+          <div class="mini-table" style="margin-top:10px">
+            <div style="display:flex; gap:12px;">
+              <div style="flex:1; padding:8px"><strong>Termurah</strong></div>
+              <div style="flex:1; padding:8px"><strong>Termahal</strong></div>
+            </div>
+            <div style="display:flex; gap:12px">
+              <div style="flex:1; background:var(--glass); padding:8px">
+                <div id="cheapest-list"></div>
+              </div>
+              <div style="flex:1; background:var(--glass); padding:8px">
+                <div id="expensive-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <footer>
+      <div id="status" class="tiny">Menunggu data…</div>
+    </footer>
+  </div>
+
+  <!-- Chart.js (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Expected JSON shape (example)
+    // {
+    //   "course_count": 6,
+    //   "stats": {"max_price":1500000,"min_price":400000,"avg_price":983333.33},
+    //   "cheapest":[{"id":5,"name":"HTML & CSS","price":"400000.00"}],
+    //   "expensive":[{"id":3,"name":"Data Science","price":"1500000.00"}],
+    //   "popular":[{"id":3,"name":"Machine Learning","price":"1500000.00","member_count":4}, ...],
+    //   "unpopular":[...]
+    // }
+
+    const endpoint = '/course-stat/';
+
+    // helper: friendly currency
+    const fmt = (n) => {
+      if (n === null || n === undefined) return '—';
+      const x = Number(n);
+      if (isNaN(x)) return String(n);
+      return 'Rp ' + x.toLocaleString('id-ID');
+    };
+
+    // render functions
+    function renderSummary(data){
+      document.getElementById('stat-courses').textContent = data.course_count ?? '0';
+      document.getElementById('stat-avg').textContent = fmt(data.courses?.avg_price);
+      document.getElementById('stat-min').textContent = fmt(data.courses?.min_price);
+      document.getElementById('stat-max').textContent = fmt(data.courses?.max_price);
+    }
+
+    function renderList(containerId, items, extraKey){
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      if(!items || items.length === 0){
+        container.innerHTML = `<div class="empty">Tidak ada data</div>`;
+        return;
+      }
+      items.forEach(it => {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.innerHTML = `<div>
+            <div class="name">${escapeHtml(it.fields.name || '(no name)')}</div>
+            <div class="tiny">ID: ${it.pk}</div>
+          </div>
+          <div>
+            <div class="tiny">${fmt(it.fields.price)}</div>
+            ${extraKey ? `<div class="tiny">× ${it[extraKey] ?? 0}</div>` : ''}
+          </div>`;
+        container.appendChild(div);
+      });
+    }
+
+    function renderMiniList(containerId, items){
+      const el = document.getElementById(containerId);
+      el.innerHTML = '';
+      if(!items || items.length === 0){ el.innerHTML = '<div class="tiny">—</div>'; return; }
+      items.forEach(it=>{
+        const row = document.createElement('div');
+        row.className = 'mini-row';
+        row.innerHTML = `<div style="flex:1">${escapeHtml(it.fields.name)}</div><div style="min-width:90px;text-align:right">${fmt(it.fields.price)}</div>`;
+        el.appendChild(row);
+      });
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+    }
+
+    // chart
+    let chart = null;
+    function drawChart(popular){
+      const ctx = document.getElementById('popularChart').getContext('2d');
+      if(chart) chart.destroy();
+      const top = (popular || []).slice(0,10);
+      const labels = top.map(i=>i.name);
+      const data = top.map(i=>Number(i.member_count || 0));
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Jumlah Member',
+            data,
+            backgroundColor: '#60a5fa',
+            borderColor: '#2563eb',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: Math.max(1, Math.ceil((Math.max(...data,1))/5)) } }
+          }
+        }
+      });
+    }
+
+function drawChart1(popular){
+  const ctx = document.getElementById('popularChart').getContext('2d');
+  if(chart) chart.destroy();
+
+  const top = (popular || []).slice(0,10);
+
+  // ✅ Ambil nama dari 'fields.name' dan peserta dari 'member_count' (kalau ada)
+  const labels = top.map(i => i.fields?.name || '(Tanpa Nama)');
+  const data = top.map(i => Number(i.member_count || 0));
+
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Jumlah Peserta',
+        data,
+        backgroundColor: '#60a5fa',
+        borderColor: '#2563eb',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } }
+      }
+    }
+  });
+}
+
+    // fetch and render
+    async function loadStats(){
+      const statusEl = document.getElementById('status');
+      statusEl.textContent = 'Mengambil data dari server…';
+      try{
+        const res = await fetch(endpoint, {cache: "no-store"});
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        renderSummary(data);
+
+        renderList('popular-list', data.popular, 'member_count');
+        renderList('unpopular-list', data.unpopular, 'member_count');
+
+        renderMiniList('cheapest-list', data.cheapest);
+        renderMiniList('expensive-list', data.expensive);
+
+        drawChart1(data.popular);
+
+        document.getElementById('popular-count').textContent = (data.popular?.length ?? 0) + ' results';
+        document.getElementById('last-updated').textContent = new Date().toLocaleString('id-ID');
+
+        statusEl.textContent = 'Data berhasil dimuat.';
+      }catch(err){
+        console.error('Gagal memuat statistik:', err);
+        statusEl.textContent = 'Gagal memuat data — periksa endpoint /course-stat/.';
+        // fallback: tampil contoh statik minimal agar UI tidak kosong
+        const fallback = {
+          course_count: 0,
+          courses: { max_price: null, min_price: null, avg_price: null },
+          cheapest: [],
+          expensive: [],
+          popular: [],
+          unpopular: []
+        };
+        renderSummary(fallback);
+        renderList('popular-list', [], 'member_count');
+        renderList('unpopular-list', [], 'member_count');
+        renderMiniList('cheapest-list', []);
+        renderMiniList('expensive-list', []);
+        drawChart1([]);
+      }
+    }
+
+    // auto load
+    loadStats();
+  </script>
+</body>
+</html>

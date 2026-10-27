@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>e-LMS • Selamat Datang</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --accent:#06b6d4; --muted:#94a3b8;
+      --glass: rgba(255,255,255,0.04);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg, #071024 0%, #071827 60%);
+      color:#e6eef6; -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      min-height:100vh; display:flex; align-items:center; justify-content:center;
+      padding:32px;
+    }
+    .container{
+      width:100%; max-width:1100px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:14px; box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+      overflow:hidden; display:grid; grid-template-columns: 1fr 380px; gap:0;
+    }
+
+    /* left */
+    .hero{
+      padding:48px;
+    }
+    .logo{
+      display:inline-block; padding:8px 12px; border-radius:10px; background:var(--glass);
+      font-weight:600; color:var(--accent); margin-bottom:18px;
+    }
+    h1{margin:0 0 12px; font-size:28px; line-height:1.05}
+    p.lead{margin:0 0 22px; color:var(--muted); max-width:60ch}
+    .features{display:flex; gap:12px; flex-wrap:wrap; margin-top:22px}
+    .chip{background:rgba(255,255,255,0.02); padding:10px 12px; border-radius:10px; font-size:14px; color:#cfeefc}
+
+    .actions{margin-top:28px; display:flex; gap:12px}
+    .btn{
+      padding:12px 16px; border-radius:10px; font-weight:600; cursor:pointer; border:0;
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    .btn-primary{background:linear-gradient(90deg,var(--accent),#7dd3fc); color:#042027; box-shadow: 0 6px 18px rgba(6,182,212,0.12)}
+    .btn-ghost{background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.04)}
+
+    /* right card */
+    .right{
+      padding:24px; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+      border-left: 1px solid rgba(255,255,255,0.03);
+      display:flex; flex-direction:column; gap:18px; justify-content:center;
+    }
+    .stat{
+      display:flex; align-items:center; gap:12px; padding:14px; background:rgba(255,255,255,0.02); border-radius:10px;
+    }
+    .stat .num{font-size:20px; font-weight:700; color:var(--accent)}
+    .stat small{display:block; color:var(--muted); font-size:13px}
+
+    footer{padding:14px; text-align:center; color:var(--muted); font-size:13px}
+    @media (max-width:900px){
+      .container{grid-template-columns:1fr; padding:0}
+      .hero{padding:28px}
+    }
+  </style>
+</head>
+<body>
+  <div class="container" role="main" aria-label="e-LMS Welcome">
+    <div class="hero">
+      <div class="logo">e-LMS</div>
+      <h1>Selamat Datang di e-LMS — Platform Pembelajaran Online</h1>
+      <p class="lead">Kelola mata kuliah, unggah konten, dan terima komentar siswa dengan mudah. Dashboard yang ringan, aman, dan siap dipakai di lingkungan pendidikan.</p>
+
+      <div class="features" aria-hidden="false">
+        <div class="chip">Manajemen Kursus</div>
+        <div class="chip">Konten Video & File</div>
+        <div class="chip">Komentar & Diskusi</div>
+        <div class="chip" onclick="location.href='/statistik-api/'">Statistik Pengguna</div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" onclick="location.href='/admin/'">Buka Admin</button>
+        <button class="btn btn-success" onclick="location.href='/course-stat/'">Lihat Statistik</button>
+        <button class="btn btn-info" onclick="location.href='/user-stats/'">Lihat Statistik User</button>
+        <button class="btn btn-primary" onclick="location.href='/silk/'">Profiling</button>
+      </div>
+
+      <div style="margin-top:28px; color:var(--muted); font-size:14px">
+        <strong>Tips:</strong> klik <em>Buka Admin</em> untuk login sebagai staff dan coba fitur manajemen course.
+      </div>
+    </div>
+
+    <aside class="right" aria-label="Sekilas Statistik">
+      <div style="font-size:13px; color:var(--muted)">Sekilas Statistik</div>
+
+      <div class="stat">
+        <div>
+          <div class="num" id="stat-courses">—</div>
+          <small>Total Mata Kuliah</small>
+        </div>
+      </div>
+
+      <div class="stat">
+        <div>
+          <div class="num" id="stat-users">—</div>
+          <small>Total Pengguna</small>
+        </div>
+      </div>
+
+      <div class="stat">
+        <div>
+          <div class="num" id="stat-comments">—</div>
+          <small>Jumlah Komentar</small>
+        </div>
+      </div>
+
+      <footer>e-LMS · dibuat untuk pembelajaran yang mudah</footer>
+    </aside>
+  </div>
+
+  <script>
+    // fetch ringkas stats (jika endpoint ada). Jika tidak ada, tetap aman.
+    (async function(){
+      try{
+        const res = await fetch('/course-stat/');
+        if(!res.ok) return;
+        const data = await res.json();
+        document.getElementById('stat-courses').textContent = data.course_count ?? '0';
+      }catch(e){/* ignore */}
+      try{
+        const res2 = await fetch('/user-stats/');
+        if(res2.ok){
+          const ud = await res2.json();
+          document.getElementById('stat-users').textContent = ud.total_users_with_courses ?? '0';
+          document.getElementById('stat-comments').textContent = ud.total_comments_all ?? '0';
+        }
+      }catch(e){}
+
+      // komentar count fallback: could fetch an endpoint, or leave —
+    })();
+  </script>
+</body>
+</html>
