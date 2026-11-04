@@ -17,10 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from core.apiv1 import apiv1
+from core.api import api
 
 urlpatterns = [
     path('', include('core.urls')),
     path('admin/', admin.site.urls),
     path('api/v1/', apiv1.urls),
+    path('api/lms/', api.urls),
 ]
 urlpatterns += [path('silk/', include('silk.urls', namespace='silk'))]

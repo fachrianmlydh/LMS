@@ -1,5 +1,5 @@
 from django.template import loader
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from .models import User,Course, CourseMember, Comment
 from django.db.models import Max, Min, Avg, Count
 from django.core import serializers
